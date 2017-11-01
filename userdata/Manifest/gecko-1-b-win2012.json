@@ -32,7 +32,7 @@
       "ComponentName": "NxLogPaperTrailConfiguration",
       "ComponentType": "ChecksumFileDownload",
       "Comment": "Maintenance Toolchain - not essential for building firefox",
-      "Source": "https://raw.githubusercontent.com/mozilla-releng/OpenCloudConfig/master/userdata/Configuration/nxlog/win2012.conf",
+      "Source": "https://raw.githubusercontent.com/{{owner}}/{{repo}}/{{sha}}/userdata/Configuration/nxlog/win2012.conf",
       "Target": "C:\\Program Files (x86)\\nxlog\\conf\\nxlog.conf",
       "DependsOn": [
         {
@@ -153,7 +153,7 @@
       "ComponentName": "SystemPowerShellProfile",
       "ComponentType": "FileDownload",
       "Comment": "Maintenance Toolchain - not essential for building firefox",
-      "Source": "https://raw.githubusercontent.com/mozilla-releng/OpenCloudConfig/master/userdata/Configuration/Microsoft.PowerShell_profile.ps1",
+      "Source": "https://raw.githubusercontent.com/{{owner}}/{{repo}}/{{sha}}/userdata/Configuration/Microsoft.PowerShell_profile.ps1",
       "Target": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\Microsoft.PowerShell_profile.ps1"
     },
     {
@@ -587,7 +587,7 @@
           "ComponentName": "Mercurial"
         }
       ],
-      "Source": "https://raw.githubusercontent.com/mozilla-releng/OpenCloudConfig/master/userdata/Configuration/Mercurial/mercurial.ini",
+      "Source": "https://raw.githubusercontent.com/{{owner}}/{{repo}}/{{sha}}/userdata/Configuration/Mercurial/mercurial.ini",
       "Target": "C:\\Program Files\\Mercurial\\Mercurial.ini"
     },
     {
@@ -600,7 +600,7 @@
           "ComponentName": "MozillaBuildSetup"
         }
       ],
-      "Source": "https://raw.githubusercontent.com/mozilla-releng/OpenCloudConfig/master/userdata/Configuration/FirefoxBuildResources/robustcheckout.py",
+      "Source": "https://raw.githubusercontent.com/{{owner}}/{{repo}}/{{sha}}/userdata/Configuration/FirefoxBuildResources/robustcheckout.py",
       "Target": "C:\\mozilla-build\\robustcheckout.py"
     },
     {
@@ -612,7 +612,7 @@
           "ComponentName": "Mercurial"
         }
       ],
-      "Source": "https://raw.githubusercontent.com/mozilla-releng/OpenCloudConfig/master/userdata/Configuration/Mercurial/cacert.pem",
+      "Source": "https://raw.githubusercontent.com/{{owner}}/{{repo}}/{{sha}}/userdata/Configuration/Mercurial/cacert.pem",
       "Target": "C:\\mozilla-build\\msys\\etc\\cacert.pem"
     },
     {
@@ -1153,7 +1153,7 @@
           "ComponentName": "GenericWorkerInstall"
         }
       ],
-      "Source": "https://raw.githubusercontent.com/mozilla-releng/OpenCloudConfig/master/userdata/Configuration/GenericWorker/run-generic-worker-format-and-reboot.bat",
+      "Source": "https://raw.githubusercontent.com/{{owner}}/{{repo}}/{{sha}}/userdata/Configuration/GenericWorker/run-generic-worker-format-and-reboot.bat",
       "Target": "C:\\generic-worker\\run-generic-worker.bat"
     },
     {
