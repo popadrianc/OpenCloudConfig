@@ -933,6 +933,37 @@ function Set-SystemTime {
     Write-Log -message ('{0} :: end' -f $($MyInvocation.MyCommand.Name)) -severity 'DEBUG'
   }
 }
+function Enable-WindowsUpdateService {
+  param (
+    [string] $locationType
+  )
+  begin {
+    Write-Log -message ('{0} :: begin' -f $($MyInvocation.MyCommand.Name)) -severity 'DEBUG'
+  }
+  process {
+    # the windows update service must be running in order for many software installs from the dsc manifests to succeed
+    # the service can be (and is) disabled after the dsc run has completed
+    $updateService = Get-Service -Name wuauserv
+    if ($updateService.Status -ne 'Running') {
+      Start-Service $updateService
+      Write-Log -message ('{0} :: windows update service start issued' -f $($MyInvocation.MyCommand.Name)) -severity 'INFO'
+    } else {
+      Write-Log -message ('{0} :: windows update service found in the running state' -f $($MyInvocation.MyCommand.Name)) -severity 'DEBUG'
+    }
+    if (($locationType -eq 'DataCenter') -and ($OSVersion -eq "Microsoft Windows 10*")) {
+      # prevent other updates from sneaking in on windows 10
+      $taskName = 'OneDrive Standalone Update task v2'
+      $taskExists = Get-ScheduledTask | Where-Object {$_.TaskName -like $taskName }
+      if ($taskExists) {
+        Unregister-ScheduledTask -TaskName $taskName -Confirm:$false
+        Write-Log -message ('{0} :: scheduled task: "{0}" removed' -f $($MyInvocation.MyCommand.Name), $taskName) -severity 'INFO'
+      }
+    }
+  }
+  end {
+    Write-Log -message ('{0} :: end' -f $($MyInvocation.MyCommand.Name)) -severity 'DEBUG'
+  }
+}
 
 
 # Before doing anything else, make sure we are using TLS 1.2
@@ -942,27 +973,12 @@ Set-DefaultStrongCryptography
 # SourceRepo is in place to toggle between production and testing environments
 $SourceRepo = 'mozilla-releng'
 
-# The Windows update service needs to be enabled for OCC to process but needs to be disabled during testing. 
-$UpdateService = Get-Service -Name wuauserv
-if ($UpdateService.Status -ne 'Running') {
-  Start-Service $UpdateService
-  Write-Log -message 'Enabling Windows update service'
-} else {
-  Write-Log -message 'Windows update service is running'
-}
 if ((Get-Service 'Ec2Config' -ErrorAction SilentlyContinue) -or (Get-Service 'AmazonSSMAgent' -ErrorAction SilentlyContinue)) {
   $locationType = 'AWS'
 } else {
   $locationType = 'DataCenter'
-  # Prevent other updates from sneaking in on Windows 10
-  If($OSVersion -eq "Microsoft Windows 10*") {
-    $taskName = "OneDrive Standalone Update task v2"
-    $taskExists = Get-ScheduledTask | Where-Object {$_.TaskName -like $taskName }
-      if($taskExists) {
-      Unregister-ScheduledTask -TaskName "OneDrive Standalone Update task v2" -Confirm:$false   
-    }
-  }
 }
+Write-Log -message ('location type determined as: {0}' -f $locationType) -severity 'INFO'
 $lock = 'C:\dsc\in-progress.lock'
 if (Test-Path -Path $lock -ErrorAction SilentlyContinue) {
   Write-Log -message 'userdata run aborted. lock file exists.' -severity 'INFO'
@@ -979,6 +995,7 @@ if (Test-Path -Path $lock -ErrorAction SilentlyContinue) {
 }
 Write-Log -message 'userdata run starting.' -severity 'INFO'
 Set-SystemTime -locationType $locationType -timezone 'UTC'
+Enable-WindowsUpdateService -locationType $locationType
 
 # set up a log folder, an execution policy that enables the dsc run and a winrm envelope size large enough for the dynamic dsc.
 $logFile = ('{0}\log\{1}.userdata-run.log' -f $env:SystemDrive, [DateTime]::Now.ToString("yyyyMMddHHmmss"))
