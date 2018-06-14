@@ -905,6 +905,34 @@ function Conserve-DiskSpace {
     Write-Log -message ('{0} :: end' -f $($MyInvocation.MyCommand.Name)) -severity 'DEBUG'
   }
 }
+function Set-SystemTime {
+  param (
+    [string] $locationType,
+    [string] $timezone = 'UTC'
+  )
+  begin {
+    Write-Log -message ('{0} :: begin' -f $($MyInvocation.MyCommand.Name)) -severity 'DEBUG'
+  }
+  process {
+    Get-Service -Name 'w32time' | Stop-Service -PassThru
+    tzutil /s $timezone
+    Write-Log -message ('system timezone set to {0}.' -f $timezone) -severity 'INFO'
+    if ($locationType -eq 'DataCenter') {
+      $ntpserverlist = 'infoblox1.private.mdc1.mozilla.com'
+    } else {
+      $ntpserverlist = '0.pool.ntp.org 1.pool.ntp.org 2.pool.ntp.org 3.pool.ntp.org'
+    }
+    w32tm /register
+    w32tm /config /syncfromflags:manual /update /manualpeerlist:"$ntpserverlist",0x8
+    Write-Log -message ('ntp server list set to {0}.' -f $ntpserverlist) -severity 'INFO'
+    Get-Service -Name 'w32time' | Start-Service -PassThru
+    w32tm /resync /force
+    Write-Log -message 'system clock synchronised.' -severity 'INFO'
+  }
+  end {
+    Write-Log -message ('{0} :: end' -f $($MyInvocation.MyCommand.Name)) -severity 'DEBUG'
+  }
+}
 
 
 # Before doing anything else, make sure we are using TLS 1.2
@@ -950,20 +978,7 @@ if (Test-Path -Path $lock -ErrorAction SilentlyContinue) {
   New-Item $lock -type file -force
 }
 Write-Log -message 'userdata run starting.' -severity 'INFO'
-if ($locationType -eq 'DataCenter') {
-  $ntpserverlist = 'infoblox1.private.mdc1.mozilla.com'
-} else {
-  $ntpserverlist = '0.pool.ntp.org 1.pool.ntp.org 2.pool.ntp.org 3.pool.ntp.org'
-}
-
-Get-Service -Name 'w32time' | Stop-Service -PassThru
-tzutil /s UTC
-Write-Log -message 'system timezone set to UTC.' -severity 'INFO'
-w32tm /register
-w32tm /config /syncfromflags:manual /update /manualpeerlist:"$ntpserverlist",0x8
-Get-Service -Name 'w32time' | Start-Service -PassThru
-w32tm /resync /force
-Write-Log -message 'system clock synchronised.' -severity 'INFO'
+Set-SystemTime -locationType $locationType -timezone 'UTC'
 
 # set up a log folder, an execution policy that enables the dsc run and a winrm envelope size large enough for the dynamic dsc.
 $logFile = ('{0}\log\{1}.userdata-run.log' -f $env:SystemDrive, [DateTime]::Now.ToString("yyyyMMddHHmmss"))
